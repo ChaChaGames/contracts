@@ -19,16 +19,17 @@ contract ChaCha is ERC20,IChaCha{
 
     uint256 public startMintTime;
 
-    uint256 public firstYearMinted = 50 * 10 ** 8 * 10 ** 18;
+    uint256 public constant firstYearMinted = 50 * 10 ** 8 * 10 ** 18;
 
-    uint256 public decreaseRate = 10;
+    uint256 public constant decreaseRate = 10;
 
     uint256 public constant YEAR_SECONDS = 365*24*60*60;
 
     uint256 public lastMintTime;
 
 
-    constructor(address daoAddress) public ERC20("CHACHA GAME", "CHACHA") {
+    constructor(address daoAddress) ERC20("CHACHA GAME", "CHACHA") {
+        require(daoAddress != address(0),"daoAddress  is not zero address require");
         _maxSupply = 275 * 10 ** 8 * 10 ** 18;
         _daoAddress = daoAddress;
     }
@@ -63,6 +64,9 @@ contract ChaCha is ERC20,IChaCha{
             uint256 availableIndex = firstYearMinted;
             timeInterval -= (YEAR_SECONDS);
             yearIndex --;
+            if(yearIndex>8){
+                yearIndex = 9;
+            }
             for(uint256 i = 0; i < yearIndex; i++){
                 availableIndex -= firstYearMinted.mul(decreaseRate).div(100);
                 availableTotalMint += availableIndex;
@@ -91,6 +95,9 @@ contract ChaCha is ERC20,IChaCha{
             uint256 availableIndex = firstYearMinted;
             timeInterval -= (YEAR_SECONDS);
             yearIndex --;
+            if(yearIndex>8){
+                yearIndex = 9;
+            }
             for(uint256 i = 0; i < yearIndex; i++){
                 availableIndex -= firstYearMinted.mul(decreaseRate).div(100);
                 availableTotalMint += availableIndex;
@@ -113,11 +120,11 @@ contract ChaCha is ERC20,IChaCha{
         override
         returns (uint256)
     {
-        require(_from < _to);
-        uint256 amountForm = this.availableQuantity(_from);
+        require(_from < _to,"The start block cannot be larger than the end block");
+        uint256 amountFrom = this.availableQuantity(_from);
         uint256 amountTo = this.availableQuantity(_to);
         return
-            (amountTo.sub(amountForm)).mul(IChaChaDao(_daoAddress).lpRate()).div(10000);
+            (amountTo.sub(amountFrom)).mul(IChaChaDao(_daoAddress).lpRate()).div(10000);
     }
     function getMultiplierForNode(uint256 _from, uint256 _to)
         external
@@ -125,11 +132,11 @@ contract ChaCha is ERC20,IChaCha{
         override
         returns (uint256)
     {
-        require(_from < _to);
-        uint256 amountForm = this.availableQuantity(_from);
+        require(_from < _to,"The start block cannot be larger than the end block");
+        uint256 amountFrom = this.availableQuantity(_from);
         uint256 amountTo = this.availableQuantity(_to);
         return
-            (amountTo.sub(amountForm)).mul(IChaChaDao(_daoAddress).nodeRate()).div(10000);
+            (amountTo.sub(amountFrom)).mul(IChaChaDao(_daoAddress).nodeRate()).div(10000);
     }
 
     function getMultiplierForNFT(uint256 _from, uint256 _to)
@@ -138,11 +145,11 @@ contract ChaCha is ERC20,IChaCha{
         override
         returns (uint256)
     {
-        require(_from < _to);
-        uint256 amountForm = this.availableQuantity(_from);
+        require(_from < _to,"The start block cannot be larger than the end block");
+        uint256 amountFrom = this.availableQuantity(_from);
         uint256 amountTo = this.availableQuantity(_to);
         return
-            (amountTo.sub(amountForm)).mul(IChaChaDao(_daoAddress).nftRate()).div(10000);
+            (amountTo.sub(amountFrom)).mul(IChaChaDao(_daoAddress).nftRate()).div(10000);
     }
 
     function mint()
@@ -171,6 +178,7 @@ contract ChaCha is ERC20,IChaCha{
         onlyDao
         returns (uint256)
     {
+        require(startMintTime == 0,"already start mint");
         startMintTime = block.timestamp;
         lastMintTime = startMintTime;
         return startMintTime;
