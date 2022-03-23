@@ -84,6 +84,8 @@ contract MasterChef is Ownable {
 
     address public lpPoolAddress;
 
+    mapping(address => bool) public poolIsAdd;
+
   
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -117,6 +119,7 @@ contract MasterChef is Ownable {
         IERC20 _lpToken,
         bool _withUpdate
     ) public onlyOwner {
+        require(!poolIsAdd[address(_lpToken)],"add same LP token is not allow");
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -131,6 +134,7 @@ contract MasterChef is Ownable {
                 accChaChaPerShare: 0
             })
         );
+        poolIsAdd[address(_lpToken)] = true;
     }
 
     // Update the given pool's ChaCha allocation point. Can only be called by the owner.
@@ -147,20 +151,6 @@ contract MasterChef is Ownable {
         );
         poolInfo[_pid].allocPoint = _allocPoint;
     }
-
-    // Migrate lp token to another lp contract. Can be called by anyone. We trust that migrator contract is good.
-    function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "migrate: no migrator");
-        PoolInfo storage pool = poolInfo[_pid];
-        IERC20 lpToken = pool.lpToken;
-        uint256 bal = lpToken.balanceOf(address(this));
-        lpToken.safeApprove(address(migrator), bal);
-        IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
-        pool.lpToken = newLpToken;
-    }
-
-    
     // View function to see pending ChaChas on frontend.
     function pendingChaCha(uint256 _pid, address _user)
         external
@@ -195,8 +185,8 @@ contract MasterChef is Ownable {
         if(chachaReward==0||lpSupply == 0){
             return (user.amount,lpSupply,0);
         }else{
-            uint256 lpbalance = ChaCha.balanceOf(address(pool.lpToken)).mul(lpSupply).div(pool.lpToken.totalSupply()).mul(2);
-            uint256 dayChaChaReward =  chachaReward.mul(1 ether).div(lpbalance);
+            uint256 lpbalance = ChaCha.balanceOf(address(pool.lpToken)).mul(10e6).mul(lpSupply).div(pool.lpToken.totalSupply()).mul(2);
+            uint256 dayChaChaReward =  chachaReward.mul(1 ether).mul(10e6).div(lpbalance);
             return (user.amount,lpSupply,dayChaChaReward.mul(365 * 24 * 6 ));
         }
     }  
