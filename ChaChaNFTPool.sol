@@ -58,8 +58,6 @@ contract ChaChaNFTPool is IPool,Owned,IERC1155Receiver{
 
     bool private isStart;
 
-    uint256 private totalReword;
-
     uint256 private startTime;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -71,6 +69,7 @@ contract ChaChaNFTPool is IPool,Owned,IERC1155Receiver{
     );
 
     constructor(address _daoAddress,address _chachaToken,uint256 _startTime){
+        require(_daoAddress != address(0) && _chachaToken != address(0),"daoAddress or chachaToken is not zero address require");
         daoAddress = _daoAddress;
         chachaToken = _chachaToken;
         startTime = _startTime;
@@ -214,14 +213,14 @@ contract ChaChaNFTPool is IPool,Owned,IERC1155Receiver{
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accChaChaPerShare = pool.accChaChaPerShare;
         uint256 lpSupply = pool.nftToken.balanceOf(address(this),pool.id);
-        uint256 totalReword = 0;
+        uint256 totalReward = 0;
         if (block.timestamp > pool.lastRewardTime && lpSupply != 0) {
             uint256 chachaReward = 
             IChaChaNFT(address(chachaToken)).getMultiplierForNFT(pool.lastRewardTime, block.timestamp).mul(pool.allocPoint).div(
                 totalAllocPoint
             );
             if(chachaReward.div(lpSupply) >= getMaxReward(pool.lastRewardTime,block.timestamp)){
-                totalReword = getMaxReward(pool.lastRewardTime,block.timestamp).mul(lpSupply);
+                totalReward = getMaxReward(pool.lastRewardTime,block.timestamp).mul(lpSupply);
                 accChaChaPerShare = pool.accChaChaPerShare.add(
                     getMaxReward(pool.lastRewardTime,block.timestamp).mul(1e12)
                 );
@@ -229,12 +228,12 @@ contract ChaChaNFTPool is IPool,Owned,IERC1155Receiver{
                 accChaChaPerShare = pool.accChaChaPerShare.add(
                     chachaReward.mul(1e12).div(lpSupply)
                 );
-                totalReword = chachaReward;
+                totalReward = chachaReward;
             }
         }
         if(IERC1155(pool.nftToken).balanceOf(address(this), pool.id) > 0){
-            uint256 total = totalReword.mul(IOracle(orcale).getChaChaPrice()).mul(365 * 24 * 60 * 60) .div(block.timestamp.sub(pool.lastRewardTime));
-            uint256 apy = total.mul(1 ether).div(IERC1155(pool.nftToken).balanceOf(address(this), pool.id).mul(IChaChaPrice(boxSaleAddress).getPublicSalePrice()));
+            uint256 total = totalReward.mul(IOracle(orcale).getChaChaPrice()).mul(365 * 24 * 60 * 60) .div(block.timestamp.sub(pool.lastRewardTime));
+            uint256 apy = total.div(IERC1155(pool.nftToken).balanceOf(address(this), pool.id).mul(IChaChaPrice(boxSaleAddress).getPublicSalePrice())).div(1 ether);
             return (user.amount.mul(accChaChaPerShare).div(1e12).sub(user.rewardDebt),user.amount,apy);
         }else{
             return (user.amount.mul(accChaChaPerShare).div(1e12).sub(user.rewardDebt),user.amount,0);
