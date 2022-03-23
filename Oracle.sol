@@ -65,7 +65,7 @@ contract Oracle is Owned,IOracle{
             return chachaPriceByChaChaBusd();
         }
         if(chacha_bnb_lp != address(0) && bnb_busd_lp != address(0)){
-            return chachaPriceByChaChaBnb().mul(bnbPriceByBnbBusd());
+            return chachaPriceByChaChaBnb().mul(bnbPriceByBnbBusd()).div(1 ether);
         }
         return 1;
     }
@@ -77,7 +77,7 @@ contract Oracle is Owned,IOracle{
         uint8 chachaDec = IERC20(chachaToken).decimals();
         uint8 busdDec = IERC20(busdToken).decimals();
 
-        return busdBalance.div(10 ** busdDec).div(chachaBalance.div(10 ** chachaDec));
+        return busdBalance.mul(1 ether).div(10 ** busdDec).div(chachaBalance.div(10 ** chachaDec));
     }
 
     function chachaPriceByChaChaBnb() internal view returns(uint256){
@@ -87,7 +87,7 @@ contract Oracle is Owned,IOracle{
         uint8 chachaDec = IERC20(chachaToken).decimals();
         uint8 wbnbDec = IERC20(wbnbToken).decimals();
 
-        return wbnbBalance.div(10 ** wbnbDec).div(chachaBalance.div(10 ** chachaDec));
+        return wbnbBalance.mul(1 ether).div(10 ** wbnbDec).div(chachaBalance.div(10 ** chachaDec));
     }
 
     function bnbPriceByBnbBusd() internal view returns(uint256){
@@ -97,7 +97,7 @@ contract Oracle is Owned,IOracle{
         uint8 busdDec = IERC20(busdToken).decimals();
         uint8 bnbDec = IERC20(wbnbToken).decimals();
 
-        return busdBalance.div(10 ** busdDec).div(bnbBalance.div(10 ** bnbDec));
+        return busdBalance.mul(1 ether).div(10 ** busdDec).div(bnbBalance.div(10 ** bnbDec));
     }
 
     
