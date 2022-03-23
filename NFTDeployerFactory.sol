@@ -5,14 +5,11 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "./ChaChaERC721.sol";
 import "./ChaChaERC1155.sol";
 import "./interface/INFTInitialize.sol";
 import "./interface/IGameMerchant.sol";
 import "./interface/IOwnable.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract NFTDeployerFactory is Ownable, ERC1155Holder {
     address public gameMerchant;

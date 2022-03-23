@@ -26,6 +26,8 @@ contract ChaChaERC1155 is Context,Ownable,INFTInitialize, IBlindBoxNFT,ERC165, I
     using Address for address;
     using Strings for uint256;
 
+    bool private initialized;
+
     // NFT Factory address
     address public nftFactory;
 
@@ -87,9 +89,12 @@ contract ChaChaERC1155 is Context,Ownable,INFTInitialize, IBlindBoxNFT,ERC165, I
         nftFactory = msg.sender;
     }
 
-    // called once by the factory at time of deployment
+      // called once by the factory at time of deployment
     function initialize(string memory name_,string memory symbol_,uint256 initSupply_,uint256 maxSupply_,string memory baseURI_,string[] memory  intNames_,uint256[] memory minValues_,uint256[] memory maxValues_ ,string[] memory stringNames_,string[]  memory values_,uint256 ercType_,address  nftAddress_) external virtual override{
         require(msg.sender == nftFactory, 'ChaChaERC1155: FORBIDDEN'); // sufficient check
+        require(!initialized, "already been initialized");
+        initialized = true;
+        
         _name = name_;
         _symbol = symbol_;
         _maxSupply = maxSupply_;
@@ -103,7 +108,6 @@ contract ChaChaERC1155 is Context,Ownable,INFTInitialize, IBlindBoxNFT,ERC165, I
         nftAddress = nftAddress_;
         _mint(msg.sender, 1, initSupply_, "");
     }
-
 
     // Open the box
     function unBox(address receiveAddr) external virtual override{

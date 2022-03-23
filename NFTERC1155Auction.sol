@@ -1514,7 +1514,9 @@ contract NFTERC1155Auction is ERC1155Holder, Ownable{
                 batchAmounts,
                 "0x0"
             );
-
+            for (uint256 i = 0; i < numberOfTokens; i++) {
+                nftOwner[_nftContractAddress][batchTokenIds[i]][msg.sender] = address(0);
+            }
         } else {
            uint256 _amount = nftContractAuctions[ _nftContractAddress ][_tokenId][msg.sender].amount;
             IERC1155(_nftContractAddress).safeTransferFrom(
@@ -1530,6 +1532,7 @@ contract NFTERC1155Auction is ERC1155Holder, Ownable{
         emit NFTWithdrawn(_nftContractAddress, _tokenId, msg.sender);
     }
 
+    
     function withdrawBid(address _nftContractAddress, uint256 _tokenId,address _nftSellerAddress)
         external
     {

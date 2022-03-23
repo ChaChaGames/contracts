@@ -412,7 +412,7 @@ contract SaplingNFT is ERC721Enumerable, AccessControl {
     @dev Check if an address is admin
      */
     function isAdmin(address account) external view returns (bool) {
-        return hasRole(whitelistedRole, account);
+        return hasRole(DEFAULT_ADMIN_ROLE, account);
     }
 
     /// INTERNAL FUNCTIONS

@@ -40,10 +40,8 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
     mapping(address => mapping(uint256 => mapping(address => Auction))) public nftContractAuctions;
     mapping(uint256 => uint256) public saleAmounts;
 
-    address public payToken = 0x3056B1d1AC0cE9c4DF9525c10908dDCcD8B335A2;
-    mapping(address => uint256) bnbTransferCredits;
-    mapping(address => mapping(address => uint256)) ercTransferCredits;
-
+    address public payToken = 0x0000000000000000000000000000000000001000;
+    
     
     //Each Auction is unique to each NFT (contract + id pairing).
     struct Auction {
@@ -167,7 +165,6 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
     function setAddress(address _payToken) external onlyOwner {
         if(_payToken!=address(0)) payToken = _payToken;
     }
-    
     function createSale(
         address _nftContractAddress,
         uint256 _tokenId,
@@ -178,7 +175,10 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
         external onlyOwner
     {
         //require(IGameMerchant(gameMerchant).merchants(msg.sender).id != 0, 'Merchant does not exist'); 
-        require(publicSaleActivated, "sale is not active.");
+        require(publicSaleActivated, "Sale is not active.");
+        require(_recipient!=address(0), "No recipient address set.");
+        require(_isERC20Auction(payToken), "No payToken address set.");
+        
         require(nftContractAuctions[_nftContractAddress][_tokenId][msg.sender].amount<=0, " on sale.");
         _transferNftToAuctionContract(_nftContractAddress, _tokenId,_amount);
         _setupSale(
@@ -261,7 +261,7 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
         limitedTimeSaleActivated =  _limitedTimeSaleActivated;
     }
 
-    function buyBox(
+   function buyBox(
         address _nftContractAddress,
         uint256 _tokenId,
         address _nftSeller ,
@@ -273,27 +273,14 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
         saleWithinLimits(_nftContractAddress,_tokenId,_nftSeller,_amount)
     {
         require(publicSaleActivated, "sale is not active.");
+        require(_isERC20Auction(payToken), "No payToken address set.");
         if(limitedTimeSaleActivated)saleWithTimeLimits();
         if(limitedAmountSaleActivated)saleWithSaleAmountLimits(_amount);
 
         uint256 _buyNowPrice = nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].buyNowPrice;
         // address _recipient = nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient;
-       
-        if (_isERC20Auction(payToken)) {
-            if(nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient==address(0)){
-                IERC20(payToken).transferFrom(msg.sender,address(this),_amount.mul(_buyNowPrice) );
-                ercTransferCredits[msg.sender][payToken] = ercTransferCredits[msg.sender][payToken].add(_amount.mul(_buyNowPrice));
-            }else{
-                IERC20(payToken).transferFrom(msg.sender,nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient,_amount.mul(_buyNowPrice) );
-            }
-        } else {
-            // attempt to send the funds to the recipient
-            if(nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient==address(0)){
-                bnbTransferCredits[msg.sender] = bnbTransferCredits[msg.sender].add(_amount.mul(_buyNowPrice));
-            }else{
-                payable(nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient).transfer(_amount.mul(_buyNowPrice));
-            }
-        }
+
+        IERC20(payToken).transferFrom(msg.sender,nftContractAuctions[_nftContractAddress][_tokenId][_nftSeller].recipient,_amount.mul(_buyNowPrice) );
 
         IERC1155(_nftContractAddress).safeTransferFrom(
             address(this),
@@ -333,21 +320,6 @@ contract BlindBoxSale is ERC1155Holder, Ownable {
         );
         _;
     }
-
-    function withdrawAllCredits(address asset) external {
-        uint256 amount = 0;
-        if(asset==address(0)){
-            amount = bnbTransferCredits[msg.sender];
-            require(amount != 0, "no credits to withdraw");
-            payable(msg.sender).transfer(amount);
-            bnbTransferCredits[msg.sender] = 0;
-        }else{
-            amount = ercTransferCredits[msg.sender][asset];
-            require(amount != 0, "no credits to withdraw");
-            IERC20(asset).transfer(msg.sender, amount);
-            ercTransferCredits[msg.sender][asset] = 0;
-        }
-   }
 
     function withdrawNft(address _nftContractAddress, uint256 _tokenId)
         external
