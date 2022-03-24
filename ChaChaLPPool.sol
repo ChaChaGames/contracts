@@ -13,7 +13,7 @@ contract ChaChaLPPool is IPool{
     address private chachaToken;
 
     constructor(address _daoAddress,address _chachaToken){
-        require(daoAddress != address(0) && _chachaToken != address(0),"daoAddress or chachaToken is not zero address require");
+        require(_daoAddress != address(0) && _chachaToken != address(0),"daoAddress or chachaToken is not zero address require");
         daoAddress = _daoAddress;
         chachaToken = _chachaToken;
     }
