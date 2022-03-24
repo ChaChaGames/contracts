@@ -233,7 +233,7 @@ contract ChaChaNFTPool is IPool,Owned,IERC1155Receiver{
         }
         if(IERC1155(pool.nftToken).balanceOf(address(this), pool.id) > 0){
             uint256 total = totalReward.mul(IOracle(orcale).getChaChaPrice()).mul(365 * 24 * 60 * 60) .div(block.timestamp.sub(pool.lastRewardTime));
-            uint256 apy = total.div(IERC1155(pool.nftToken).balanceOf(address(this), pool.id).mul(IChaChaPrice(boxSaleAddress).getPublicSalePrice())).div(1 ether);
+            uint256 apy = total.div(IERC1155(pool.nftToken).balanceOf(address(this), pool.id).mul(IChaChaPrice(boxSaleAddress).getPublicSalePrice()));
             return (user.amount.mul(accChaChaPerShare).div(1e12).sub(user.rewardDebt),user.amount,apy);
         }else{
             return (user.amount.mul(accChaChaPerShare).div(1e12).sub(user.rewardDebt),user.amount,0);
